@@ -23,7 +23,7 @@ module.exports = generators.Base.extend({
     
     var config = _.extend({
       features : true,
-      drupal_theme : '',
+      drupal_theme : 'gesso',
       drupal_version : ''
     }, this.config.getAll());
 
@@ -60,6 +60,9 @@ module.exports = generators.Base.extend({
         name: 'drupal_theme',
         message: 'Theme name (machine name)',
         default: config.drupal_theme,
+        validate: function (value) {
+          return value !== '';
+        },
       },
       {
         type: 'confirm',
