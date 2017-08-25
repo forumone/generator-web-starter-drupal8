@@ -83,7 +83,7 @@ module.exports = generators.Base.extend({
     addCapistrano: function () {
       var config = this.config.getAll();
       var docRoot = this.options.hasService('web') ? this.options.getService('web').doc_root : 'public';
-      
+
       // If we're using Capistrano set some additional values
       if (_.has(this.options.parent.answers, 'web-starter-capistrano')) {
         _.extend(this.options.parent.answers['web-starter-capistrano'].config, {
@@ -95,7 +95,7 @@ module.exports = generators.Base.extend({
     },
     setThemePath: function () {
       var docRoot = this.options.hasService('web') ? this.options.getService('web').doc_root : 'public';
-      
+
       this.options.parent.answers.theme_path = docRoot + '/themes/' + this.options.parent.answers['web-starter-drupal8'].drupal_theme;
       this.options.parent.answers.build_path = docRoot + '/themes/' + this.options.parent.answers['web-starter-drupal8'].drupal_theme;
     },
@@ -104,6 +104,7 @@ module.exports = generators.Base.extend({
     drupal: function () {
       var that = this;
       var config = this.config.getAll();
+      var docRoot = this.options.hasService('web') ? this.options.getService('web').doc_root : 'public';
 
       if (config.install_drupal) {
         // Create a Promise for remote downloading
