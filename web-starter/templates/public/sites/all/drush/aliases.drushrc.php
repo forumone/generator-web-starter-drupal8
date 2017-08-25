@@ -12,7 +12,7 @@ if (is_file($new_keyfile_path)) {
 $aliases['local'] = array(
   'parent' => '@parent',
   'uri' => 'http://10.11.12.14',
-  'root' => '/vagrant/public',
+  'root' => '/vagrant/<%= services.web.doc_root %>',
   'remote-host' => '10.11.12.14',
   'remote-user' => 'vagrant',
   'ssh-options' => "-i " . $insecure_private_key . " -l vagrant",
@@ -34,7 +34,7 @@ $aliases['local'] = array(
 
 $aliases['dev'] = array(
   'uri' => 'dev.example.com',
-  'root' => '/var/www/vhosts/example.dev/public',
+  'root' => '/var/www/vhosts/example.dev/<%= services.web.doc_root %>',
   'remote-host' => 'dev.example.com',
   'remote-user' => 'example',
   'command-specific' => array(
@@ -46,7 +46,7 @@ $aliases['dev'] = array(
 
 $aliases['stage'] = array(
   'uri' => 'sage.example.com',
-  'root' => '/var/www/vhosts/example.stage/public',
+  'root' => '/var/www/vhosts/example.stage/<%= services.web.doc_root %>',
   'remote-host' => 'stage.example.com',
   'remote-user' => 'example',
   'command-specific' => array(
@@ -58,7 +58,7 @@ $aliases['stage'] = array(
 
 $aliases['prod'] = array(
   'uri' => 'www.example.com',
-  'root' => '/var/www/vhosts/example.www/public',
+  'root' => '/var/www/vhosts/example.www/<%= services.web.doc_root %>',
   'remote-host' => 'www.example.com',
   'remote-user' => 'example',
   'command-specific' => array(

@@ -82,23 +82,22 @@ module.exports = generators.Base.extend({
   configuring: {
     addCapistrano: function () {
       var config = this.config.getAll();
-
+      var docRoot = this.options.hasService('web') ? this.options.getService('web').doc_root : 'public';
+      
       // If we're using Capistrano set some additional values
       if (_.has(this.options.parent.answers, 'web-starter-capistrano')) {
         _.extend(this.options.parent.answers['web-starter-capistrano'].config, {
           drupal_features: config.features,
           drupal_db_updates: 'true',
-          linked_dirs: '%w[public/sites/default/files]',
+          linked_dirs: '%w[' + docRoot + '/sites/default/files]',
         });
       }
     },
-    addSolr: function () {
-      // Set local variable for Solr if the user has selected to use Puppet
-      this.options.parent.answers['web-starter-drupal8'].solr = _.has(this.options.parent.answers, 'web-starter-puppet') ? this.options.parent.answers['web-starter-puppet'].solr : false;
-    },
     setThemePath: function () {
-      this.options.parent.answers.theme_path = 'public/themes/' + this.options.parent.answers['web-starter-drupal8'].drupal_theme;
-      this.options.parent.answers.build_path = 'public/themes/' + this.options.parent.answers['web-starter-drupal8'].drupal_theme;
+      var docRoot = this.options.hasService('web') ? this.options.getService('web').doc_root : 'public';
+      
+      this.options.parent.answers.theme_path = docRoot + '/themes/' + this.options.parent.answers['web-starter-drupal8'].drupal_theme;
+      this.options.parent.answers.build_path = docRoot + '/themes/' + this.options.parent.answers['web-starter-drupal8'].drupal_theme;
     },
   },
   writing: {
@@ -119,7 +118,7 @@ module.exports = generators.Base.extend({
           _.each(files, function (file) {
             that.fs.copy(
               remotePath + '/' + file,
-              that.destinationPath('public/' + file)
+              that.destinationPath(docRoot + '/' + file)
             );
           });
         });
@@ -131,7 +130,8 @@ module.exports = generators.Base.extend({
       // Get current system config for this sub-generator
       var config = this.options.parent.answers['web-starter-drupal8'];
       _.extend(config, this.options.parent.answers);
-
+      config.services = this.options.getServices();
+      var docRoot = this.options.hasService('web') ? this.options.getService('web').doc_root : 'public';
       var that = this;
 
       var ignoreFiles = [
@@ -139,22 +139,22 @@ module.exports = generators.Base.extend({
       ];
 
       return glob('**', {
-        cwd: this.templatePath(''),
+        cwd: this.templatePath('public'),
         dot: true,
         nodir: true,
         ignore: ignoreFiles,
       }).then(function (files) {
         _.each(files, function (file) {
-          that.fs.copyTpl(that.templatePath(file), that.destinationPath(file), config);
+          that.fs.copyTpl(that.templatePath('public/' + file), that.destinationPath(docRoot + '/' + file), config);
         });
 
         // Don't recreate the alias file if it already exists
         var aliasFile = config.name + '.aliases.drushrc.php';
 
-        if (!that.fs.exists('public/sites/all/drush/' + aliasFile)) {
+        if (!that.fs.exists(docRoot + '/sites/all/drush/' + aliasFile)) {
           that.fs.copyTpl(
             that.templatePath('public/sites/all/drush/aliases.drushrc.php'),
-            that.destinationPath('public/sites/all/drush/' + aliasFile),
+            that.destinationPath(docRoot + '/sites/all/drush/' + aliasFile),
             config
           );
         }
