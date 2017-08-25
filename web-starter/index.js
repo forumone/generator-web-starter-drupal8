@@ -1,53 +1,54 @@
 'use strict';
-var generators = require('yeoman-generator'), 
-  _ = require('lodash'),
-  Promise = require('bluebird'),
-  glob = Promise.promisify(require('glob')),
-  pkg = require('../package.json'),
-  ygp = require('yeoman-generator-bluebird'),
-  drupal_modules = require('drupal-modules');
+
+var generators = require('yeoman-generator');
+var _ = require('lodash');
+var Promise = require('bluebird');
+var glob = Promise.promisify(require('glob'));
+var pkg = require('../package.json');
+var ygp = require('yeoman-generator-bluebird');
+var drupalModules = require('drupal-modules');
 
 module.exports = generators.Base.extend({
-  initializing : {
-    async : function() {
+  initializing: {
+    async: function () {
       ygp(this);
       this.options.addDevDependency(pkg.name, '~' + pkg.version);
     },
-    platform : function() {
+    platform: function () {
       // Set the platform
       this.options.parent.answers.platform = 'drupal8';
-    }
+    },
   },
-  prompting : function() {
+  prompting: function () {
     var that = this;
-    
+
     var config = _.extend({
-      features : true,
-      drupal_theme : 'gesso',
-      drupal_version : ''
+      features: true,
+      drupal_theme: 'gesso',
+      drupal_version: '',
     }, this.config.getAll());
 
-    return drupal_modules.getLatestMinorVersions('drupal').then(function(releases) {
+    return drupalModules.getLatestMinorVersions('drupal').then(function (releases) {
       var tags = _.chain(releases)
-        .filter({ version_major : 8 })
-        .map(function(release) {
-          return release.version
+        .filter({ version_major: 8 })
+        .map(function (release) {
+          return release.version;
         })
         .value();
-      
-      if (config.drupal_version && tags[0] != config.drupal_version) {
+
+      if (config.drupal_version && String(tags[0]) !== String(config.drupal_version)) {
         tags.push(config.drupal_version);
       }
 
       return Promise.resolve(tags);
     })
-    .then(function(tags) {
+    .then(function (tags) {
       return that.prompt([{
-        type : 'list',
-        name : 'drupal_version',
-        choices : tags,
-        message : 'Select a version of Drupal',
-        default : config.drupal_version,
+        type: 'list',
+        name: 'drupal_version',
+        choices: tags,
+        message: 'Select a version of Drupal',
+        default: config.drupal_version,
       },
       {
         type: 'confirm',
@@ -71,37 +72,37 @@ module.exports = generators.Base.extend({
         default: false,
       }]);
     })
-    .then(function(answers) {
+    .then(function (answers) {
       that.config.set(answers);
 
       // Expose the answers on the parent generator
-      _.extend(that.options.parent.answers, { 'web-starter-drupal8' : answers });
+      _.extend(that.options.parent.answers, { 'web-starter-drupal8': answers });
     });
   },
-  configuring : {
-    addCapistrano : function() {
+  configuring: {
+    addCapistrano: function () {
       var config = this.config.getAll();
-      
+
       // If we're using Capistrano set some additional values
       if (_.has(this.options.parent.answers, 'web-starter-capistrano')) {
         _.extend(this.options.parent.answers['web-starter-capistrano'].config, {
-          drupal_features : config.features,
-          drupal_db_updates : 'true',
-          linked_dirs : '%w[public/sites/default/files]'
+          drupal_features: config.features,
+          drupal_db_updates: 'true',
+          linked_dirs: '%w[public/sites/default/files]',
         });
       }
     },
-    addSolr : function() {
+    addSolr: function () {
       // Set local variable for Solr if the user has selected to use Puppet
-      this.options.parent.answers['web-starter-drupal8'].solr = (_.has(this.options.parent.answers, 'web-starter-puppet')) ? this.options.parent.answers['web-starter-puppet'].solr : false;
+      this.options.parent.answers['web-starter-drupal8'].solr = _.has(this.options.parent.answers, 'web-starter-puppet') ? this.options.parent.answers['web-starter-puppet'].solr : false;
     },
-    setThemePath : function() {
+    setThemePath: function () {
       this.options.parent.answers.theme_path = 'public/themes/' + this.options.parent.answers['web-starter-drupal8'].drupal_theme;
       this.options.parent.answers.build_path = 'public/themes/' + this.options.parent.answers['web-starter-drupal8'].drupal_theme;
-    }
+    },
   },
-  writing : {
-    drupal : function() {
+  writing: {
+    drupal: function () {
       var that = this;
       var config = this.config.getAll();
 
@@ -109,13 +110,13 @@ module.exports = generators.Base.extend({
         // Create a Promise for remote downloading
         return this.remoteAsync('drupal', 'drupal', config.drupal_version)
         .bind({})
-        .then(function(remote) {
+        .then(function (remote) {
           this.remotePath = remote.cachePath;
-          return glob('**', { cwd : remote.cachePath });
+          return glob('**', { cwd: remote.cachePath });
         })
-        .then(function(files) {
+        .then(function (files) {
           var remotePath = this.remotePath;
-          _.each(files, function(file) {
+          _.each(files, function (file) {
             that.fs.copy(
               remotePath + '/' + file,
               that.destinationPath('public/' + file)
@@ -123,39 +124,41 @@ module.exports = generators.Base.extend({
           });
         });
       }
+
+      return Promise.resolve();
     },
-    settings : function() {
+    settings: function () {
       // Get current system config for this sub-generator
       var config = this.options.parent.answers['web-starter-drupal8'];
       _.extend(config, this.options.parent.answers);
 
       var that = this;
-      
+
       var ignoreFiles = [
-        '**/aliases.drushrc.php'
+        '**/aliases.drushrc.php',
       ];
-      
+
       return glob('**', {
-        cwd : this.templatePath(''), 
-        dot: true, 
-        nodir : true,
-        ignore : ignoreFiles
-      }).then(function(files) {
-        _.each(files, function(file) {
+        cwd: this.templatePath(''),
+        dot: true,
+        nodir: true,
+        ignore: ignoreFiles,
+      }).then(function (files) {
+        _.each(files, function (file) {
           that.fs.copyTpl(that.templatePath(file), that.destinationPath(file), config);
         });
-        
+
         // Don't recreate the alias file if it already exists
         var aliasFile = config.name + '.aliases.drushrc.php';
-        
+
         if (!that.fs.exists('public/sites/all/drush/' + aliasFile)) {
-          return that.fs.copyTpl(
-            that.templatePath('public/sites/all/drush/aliases.drushrc.php'), 
+          that.fs.copyTpl(
+            that.templatePath('public/sites/all/drush/aliases.drushrc.php'),
             that.destinationPath('public/sites/all/drush/' + aliasFile),
             config
           );
         }
       });
-    }
-  }
+    },
+  },
 });
