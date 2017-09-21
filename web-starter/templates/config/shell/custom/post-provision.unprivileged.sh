@@ -22,13 +22,6 @@ if [[ -f "${DOCROOT}/sites/default/services.vm.yml" ]]; then
   fi
 fi
 
-if [[ -f "${DOCROOT}/sites/default/settings.vm.php" ]]; then
-  if [[ ! -f "${DOCROOT}/sites/default/settings.php" || -w "${DOCROOT}/sites/default/settings.php" ]]; then
-    echo 'Copying settings file'
-    cd ${DOCROOT}/sites/default && cp settings.vm.php settings.php
-  fi
-fi
-
 if [[ -f "${DOCROOT}/htaccess.dev" ]]; then
   echo 'Copying .htaccess'
   cd ${DOCROOT}/ && cp htaccess.dev .htaccess
