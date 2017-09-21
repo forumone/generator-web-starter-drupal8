@@ -161,5 +161,17 @@ module.exports = generators.Base.extend({
         }
       });
     },
+    post_provision: function () {
+      // Get current system config for this sub-generator
+      var config = this.options.parent.answers['web-starter-drupal8'];
+      _.extend(config, this.options.parent.answers);
+      config.services = this.options.getServices();
+
+      this.fs.copyTpl(
+        this.templatePath('config/shell/custom/post-provision.unprivileged.sh'),
+        this.destinationPath('config/shell/custom/post-provision.unprivileged.sh'),
+        config
+      );
+    },
   },
 });
