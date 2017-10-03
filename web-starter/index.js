@@ -23,9 +23,10 @@ module.exports = generators.Base.extend({
     var that = this;
 
     var config = _.extend({
+      drupal_version: '',
+      composer: true,
       features: true,
       drupal_theme: 'gesso',
-      drupal_version: '',
     }, this.config.getAll());
 
     return drupalModules.getLatestMinorVersions('drupal').then(function (releases) {
@@ -44,6 +45,12 @@ module.exports = generators.Base.extend({
     })
     .then(function (tags) {
       return that.prompt([{
+        type: 'confirm',
+        name: 'composer',
+        message: 'Use Composer to manage PHP dependencies?',
+        default: config.composer,
+      },
+      {
         type: 'list',
         name: 'drupal_version',
         choices: tags,
@@ -135,30 +142,66 @@ module.exports = generators.Base.extend({
       var docRoot = this.options.hasService('web') ? this.options.getService('web').doc_root : 'public';
       var that = this;
 
-      var ignoreFiles = [
-        '**/aliases.drushrc.php',
-      ];
-
-      return glob('**', {
+      glob('**', {
         cwd: this.templatePath('public'),
         dot: true,
         nodir: true,
-        ignore: ignoreFiles,
       }).then(function (files) {
         _.each(files, function (file) {
           that.fs.copyTpl(that.templatePath('public/' + file), that.destinationPath(docRoot + '/' + file), config);
         });
+      });
 
-        // Don't recreate the alias file if it already exists
+      // Move old Drush files to the proper directory
+      glob('**', {
+        cwd: this.destinationPath(docRoot + '/sites/all/drush'),
+        dot: true,
+        nodir: true,
+      })
+      .then(function (files) {
+        _.each(files, function (file) {
+          that.fs.move(that.destinationPath(docRoot + '/sites/all/drush/' + file), that.destinationPath('drush/' + file));
+        });
+      })
+      // Copy new Drush files
+      .then(glob('**', {
+        cwd: this.templatePath('drush'),
+        dot: true,
+        nodir: true,
+        ignore: [
+          '**/aliases.drushrc.php',
+        ],
+      }))
+      .then(function (files) {
+        _.each(files, function (file) {
+          that.fs.copyTpl(that.templatePath('drush/' + file), that.destinationPath('drush/' + file));
+        });
+      })
+      .then(function () {
         var aliasFile = config.name + '.aliases.drushrc.php';
-
-        if (!that.fs.exists(docRoot + '/sites/all/drush/' + aliasFile)) {
+        // Don't recreate the alias file if it already exists
+        if (!that.fs.exists('drush/' + aliasFile)) {
           that.fs.copyTpl(
-            that.templatePath('public/sites/all/drush/aliases.drushrc.php'),
-            that.destinationPath(docRoot + '/sites/all/drush/' + aliasFile),
+            that.templatePath('drush/aliases.drushrc.php'),
+            that.destinationPath('drush/' + aliasFile),
             config
           );
         }
+      });
+
+      glob('**', {
+        cwd: this.templatePath(),
+        dot: true,
+        nodir: true,
+        ignore: [
+          'public/',
+          'drush/',
+          '**/aliases.drushrc.php',
+        ],
+      }).then(function (files) {
+        _.each(files, function (file) {
+          that.fs.copyTpl(that.templatePath(file), that.destinationPath(file), config);
+        });
       });
     },
   },
