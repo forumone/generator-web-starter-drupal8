@@ -56,6 +56,9 @@ module.exports = generators.Base.extend({
         choices: tags,
         message: 'Select a version of Drupal',
         default: config.drupal_version,
+        when: function (answers) {
+          return !answers.composer;
+        },
       },
       {
         type: 'confirm',
@@ -77,6 +80,9 @@ module.exports = generators.Base.extend({
         name: 'install_drupal',
         message: 'Install a fresh copy of Drupal?',
         default: false,
+        when: function (answers) {
+          return !answers.composer;
+        },
       }]);
     })
     .then(function (answers) {
