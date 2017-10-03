@@ -1,6 +1,7 @@
 'use strict';
 
 var generators = require('yeoman-generator');
+var ejs = require('ejs');
 var _ = require('lodash');
 var Promise = require('bluebird');
 var glob = Promise.promisify(require('glob'));
@@ -93,6 +94,13 @@ module.exports = generators.Base.extend({
     });
   },
   configuring: {
+    addGitignore: function () {
+      var config = this.config.getAll();
+      _.extend(config, this.options.parent.answers);
+      config.services = this.options.getServices();
+
+      this.options.addToGitignore(ejs.render(this.fs.read(this.templatePath('_.gitignore')), config));
+    },
     addCapistrano: function () {
       var config = this.config.getAll();
       var docRoot = this.options.hasService('web') ? this.options.getService('web').doc_root : 'public';

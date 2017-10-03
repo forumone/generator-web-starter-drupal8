@@ -19,6 +19,7 @@
   "dependencies": {
     "bluebird": "^3.3.4",
     "drupal-modules": "~0.1.1",
+    "ejs": "^2.5.7",
     "glob": "^7.0.3",
     "lodash": "^4.6",
     "update-notifier": "^0.2.2",
